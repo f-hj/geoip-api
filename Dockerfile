@@ -6,7 +6,7 @@ WORKDIR /data
 RUN CGO_ENABLED=0 go build
 
 # Get alpine
-FROM alpine
+FROM alpine:3.13.0
 
 COPY --from=builder /data/geoip-api /bin/geoip-api
 

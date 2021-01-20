@@ -14,8 +14,8 @@ type Error struct {
 	Info    string `json:"info"`
 }
 
-// Reponse is an object
 type Response struct {
+	IP        string  `json:"ip"`
 	City      string  `json:"city,omitempty"`
 	Country   string  `json:"country,omitempty"`
 	Latitude  float64 `json:"latitude,omitempty"`
@@ -24,14 +24,20 @@ type Response struct {
 }
 
 func main() {
+	// Open database
 	db, err := geoip2.Open("/data/GeoIP2-City.mmdb")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
+	// Create router
 	e := echo.New()
 	e.HideBanner = true
+
+	e.GET("/healthz", func(c echo.Context) error {
+		return c.HTML(http.StatusOK, "OK")
+	})
 
 	e.GET("/v1", func(c echo.Context) error {
 		ipFrom := c.Request().Header.Get("X-Forwarded-For")
@@ -59,6 +65,7 @@ func main() {
 		}
 
 		return c.JSON(http.StatusOK, Response{
+			IP:        ip.String(),
 			City:      record.City.Names["en"],
 			Country:   record.Country.Names["en"],
 			Latitude:  record.Location.Latitude,

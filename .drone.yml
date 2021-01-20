@@ -1,37 +1,43 @@
 kind: pipeline
+type: kubernetes
 name: default
 
 steps:
 - name: docker-push
   image: plugins/docker
+  settings:
+    registry: rg.fr-par.scw.cloud/fruitice
+    repo: rg.fr-par.scw.cloud/fruitice/geoip-api
+    tag: ${DRONE_COMMIT}
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
   environment:
     DOCKER_USERNAME:
       from_secret: docker_username
     DOCKER_PASSWORD:
       from_secret: docker_password
-    PLUGIN_REPO: docker-registry.fruitice.fr/geoip-api
-    PLUGIN_REGISTRY: docker-registry.fruitice.fr
-    PLUGIN_TAG: ${DRONE_COMMIT}
   privileged: true
   when:
     branch: master
     event: push
     status: success
 
-- name: kube-push
-  image: quay.io/honestbee/drone-kubernetes
+- name: Generate infrastructure PR
+  image: keymetrics/drone-plugin-auto-pr
+  pull: true
   environment:
-    KUBERNETES_SERVER:
-      from_secret: kubernetes_server
-    KUBERNETES_CERT:
-      from_secret: kubernetes_cert
-    KUBERNETES_TOKEN:
-      from_secret: kubernetes_token
-    PLUGIN_NAMESPACE: default
-    PLUGIN_DEPLOYMENT: geoip-api
-    PLUGIN_REPO: docker-registry.fruitice.fr/geoip-api
-    PLUGIN_CONTAINER: geoip-api
-    PLUGIN_TAG: ${DRONE_COMMIT}
+    GITHUB_OAUTH_TOKEN:
+      from_secret: github_token
+  settings:
+    owner: f-hj
+    repository: my-apps
+    regex: 'geoip-api: ([A-Za-z0-9.]+)'
+    release: false
+    files:
+      - 'random/geoip-api/values.yaml'
+    message: 'chore: update random geoip-api version'
   when:
     branch: master
     event: push
