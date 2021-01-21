@@ -33,7 +33,7 @@ steps:
   settings:
     owner: f-hj
     repository: my-apps
-    regex: 'geoip-api: ([A-Za-z0-9.]+)'
+    regex: 'tag: ([A-Za-z0-9.]+)'
     release: false
     files:
       - 'random/geoip-api/values.yaml'

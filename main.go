@@ -4,8 +4,10 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	"github.com/oschwald/geoip2-golang"
 )
 
@@ -25,7 +27,11 @@ type Response struct {
 
 func main() {
 	// Open database
-	db, err := geoip2.Open("/data/GeoIP2-City.mmdb")
+	path, exist := os.LookupEnv("GEOIP_PATH")
+	if !exist {
+		path = "/data/GeoIP2-City.mmdb"
+	}
+	db, err := geoip2.Open(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,6 +40,10 @@ func main() {
 	// Create router
 	e := echo.New()
 	e.HideBanner = true
+
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowMethods: []string{http.MethodGet},
+	}))
 
 	e.GET("/healthz", func(c echo.Context) error {
 		return c.HTML(http.StatusOK, "OK")
