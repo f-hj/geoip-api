@@ -9,6 +9,8 @@ steps:
     registry: rg.fr-par.scw.cloud/fruitice
     repo: rg.fr-par.scw.cloud/fruitice/geoip-api
     tag: ${DRONE_COMMIT}
+    build_args_from_env:
+      - MAXMIND_LICENSE
     username:
       from_secret: docker_username
     password:
@@ -18,6 +20,8 @@ steps:
       from_secret: docker_username
     DOCKER_PASSWORD:
       from_secret: docker_password
+    MAXMIND_LICENSE:
+      from_secret: maxmind_license
   privileged: true
   when:
     branch: master

@@ -29,7 +29,7 @@ func main() {
 	// Open database
 	path, exist := os.LookupEnv("GEOIP_PATH")
 	if !exist {
-		path = "/data/GeoIP2-City.mmdb"
+		path = "/data/GeoLite2-City.mmdb"
 	}
 	db, err := geoip2.Open(path)
 	if err != nil {
