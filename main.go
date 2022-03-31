@@ -26,12 +26,17 @@ type ResponseV1 struct {
 	Astral    *AstralResponse `json:"astral,omitempty"`
 }
 
+type CodeResponse struct {
+	Name string `json:"name"`
+	Code string `json:"code"`
+}
+
 type LocationResponse struct {
-	City      string  `json:"city,omitempty"`
-	Country   string  `json:"country,omitempty"`
-	Latitude  float64 `json:"latitude,omitempty"`
-	Longitude float64 `json:"longitude,omitempty"`
-	Timezone  string  `json:"timezone,omitempty"`
+	City      string       `json:"city,omitempty"`
+	Country   CodeResponse `json:"country"`
+	Latitude  float64      `json:"latitude,omitempty"`
+	Longitude float64      `json:"longitude,omitempty"`
+	Timezone  string       `json:"timezone,omitempty"`
 }
 
 type ASResponse struct {
@@ -78,6 +83,28 @@ func main() {
 
 	e.GET("/healthz", func(c echo.Context) error {
 		return c.HTML(http.StatusOK, "OK")
+	})
+
+	e.GET("/plain", func(c echo.Context) error {
+		ipFrom := c.Request().Header.Get("X-Forwarded-For")
+		if ipFrom == "" {
+			ipFrom = c.Request().Header.Get("X-Real-IP")
+		}
+		if ipFrom == "" {
+			ipFrom = c.Request().RemoteAddr
+		}
+		if ipFrom == "" {
+			return c.JSON(http.StatusBadRequest, "Cannot get an IP (X-Forwarded-For, X-Real-IP or Remote address)")
+		}
+
+		ip := net.ParseIP(ipFrom)
+
+		record, err := dbCity.City(ip)
+		if err != nil || record == nil {
+			return c.String(http.StatusNotFound, "Cannot found IP `"+ipFrom+"` in our database")
+		}
+
+		return c.String(http.StatusOK, ip.String()+" from "+record.City.Names["en"]+", "+record.Country.Names["en"])
 	})
 
 	e.GET("/v1", func(c echo.Context) error {
@@ -150,8 +177,11 @@ func main() {
 				Organization: as.AutonomousSystemOrganization,
 			},
 			Location: &LocationResponse{
-				City:      record.City.Names["en"],
-				Country:   record.Country.Names["en"],
+				City: record.City.Names["en"],
+				Country: CodeResponse{
+					Code: record.Country.IsoCode,
+					Name: record.Country.Names["en"],
+				},
 				Latitude:  record.Location.Latitude,
 				Longitude: record.Location.Longitude,
 				Timezone:  record.Location.TimeZone,
