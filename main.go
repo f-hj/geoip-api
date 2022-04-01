@@ -104,7 +104,12 @@ func main() {
 			return c.String(http.StatusNotFound, "Cannot found IP `"+ipFrom+"` in our database")
 		}
 
-		return c.String(http.StatusOK, ip.String()+" from "+record.City.Names["en"]+", "+record.Country.Names["en"])
+		as, err := dbASN.ASN(ip)
+		if err != nil {
+			log.Println(err)
+		}
+
+		return c.String(http.StatusOK, ip.String()+" from "+record.City.Names["en"]+", "+record.Country.Names["en"]+", using "+as.AutonomousSystemOrganization)
 	})
 
 	e.GET("/v1", func(c echo.Context) error {
