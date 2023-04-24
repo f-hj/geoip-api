@@ -51,6 +51,20 @@ type ResponseV2 struct {
 	Astral   *AstralResponse   `json:"astral,omitempty"`
 }
 
+func getIp(c echo.Context) string {
+	ipFrom := c.QueryParam("ip")
+	if ipFrom == "" {
+		ipFrom = c.Request().Header.Get("X-Forwarded-For")
+	}
+	if ipFrom == "" {
+		ipFrom = c.Request().Header.Get("X-Real-IP")
+	}
+	if ipFrom == "" {
+		ipFrom = c.Request().RemoteAddr
+	}
+	return ipFrom
+}
+
 func main() {
 	// Open database
 	pathCity, exist := os.LookupEnv("GEOIP_PATH_CITY")
@@ -86,15 +100,9 @@ func main() {
 	})
 
 	e.GET("/plain", func(c echo.Context) error {
-		ipFrom := c.Request().Header.Get("X-Forwarded-For")
+		ipFrom := getIp(c)
 		if ipFrom == "" {
-			ipFrom = c.Request().Header.Get("X-Real-IP")
-		}
-		if ipFrom == "" {
-			ipFrom = c.Request().RemoteAddr
-		}
-		if ipFrom == "" {
-			return c.JSON(http.StatusBadRequest, "Cannot get an IP (X-Forwarded-For, X-Real-IP or Remote address)")
+			return c.JSON(http.StatusBadRequest, "Cannot get an IP (?ip, X-Forwarded-For, X-Real-IP or Remote address)")
 		}
 
 		ip := net.ParseIP(ipFrom)
@@ -113,13 +121,7 @@ func main() {
 	})
 
 	e.GET("/v1", func(c echo.Context) error {
-		ipFrom := c.Request().Header.Get("X-Forwarded-For")
-		if ipFrom == "" {
-			ipFrom = c.Request().Header.Get("X-Real-IP")
-		}
-		if ipFrom == "" {
-			ipFrom = c.Request().RemoteAddr
-		}
+		ipFrom := getIp(c)
 		if ipFrom == "" {
 			return c.JSON(http.StatusBadRequest, Error{
 				Message: "Bad IP",
@@ -147,17 +149,11 @@ func main() {
 	})
 
 	e.GET("/v2", func(c echo.Context) error {
-		ipFrom := c.Request().Header.Get("X-Forwarded-For")
-		if ipFrom == "" {
-			ipFrom = c.Request().Header.Get("X-Real-IP")
-		}
-		if ipFrom == "" {
-			ipFrom = c.Request().RemoteAddr
-		}
+		ipFrom := getIp(c)
 		if ipFrom == "" {
 			return c.JSON(http.StatusBadRequest, Error{
 				Message: "Bad IP",
-				Info:    "Cannot get an IP (X-Forwarded-For, X-Real-IP or Remote address)",
+				Info:    "Cannot get an IP (?ip, X-Forwarded-For, X-Real-IP or Remote address)",
 			})
 		}
 
