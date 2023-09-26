@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -49,6 +50,13 @@ type ResponseV2 struct {
 	AS       *ASResponse       `json:"as,omitempty"`
 	Location *LocationResponse `json:"location,omitempty"`
 	Astral   *AstralResponse   `json:"astral,omitempty"`
+}
+
+type ResponseV3 struct {
+	IP       string                `json:"ip"`
+	AS       *ASResponse           `json:"as,omitempty"`
+	Location *LocationResponse     `json:"location,omitempty"`
+	Astral   *AstralStringResponse `json:"astral,omitempty"`
 }
 
 func getIp(c echo.Context) string {
@@ -118,7 +126,7 @@ func main() {
 		}
 
 		str := ip.String() + " "
-		if record.City.Names["en"] != "" && record.Country.Names["en"] != "" {
+		if record.City.Names["en"] != "" || record.Country.Names["en"] != "" {
 			str += "from "
 			if record.City.Names["en"] != "" {
 				str += record.City.Names["en"] + ", "
@@ -200,6 +208,54 @@ func main() {
 				Timezone:  record.Location.TimeZone,
 			},
 			Astral: getAstral(record.Location.Latitude, record.Location.Longitude),
+		})
+	})
+
+	e.GET("/v3", func(c echo.Context) error {
+		ipFrom := getIp(c)
+		date, err := time.Parse("2006-01-02", c.QueryParam("date"))
+		if err != nil {
+			if c.QueryParam("date") == "" {
+				date = time.Now()
+			} else {
+				return c.JSON(http.StatusBadRequest, Error{
+					Message: "Invalid date",
+					Info:    "The date `" + c.QueryParam("date") + "` is invalid, it should be formatted like `2006-01-02`",
+				})
+			}
+		}
+
+		ip := net.ParseIP(ipFrom)
+
+		as, err := dbASN.ASN(ip)
+		if err != nil {
+			log.Println(err)
+		}
+
+		record, err := dbCity.City(ip)
+		if err != nil || record == nil {
+			return c.JSON(http.StatusNotFound, Error{
+				Message: "Not found",
+				Info:    "Cannot found IP `" + ipFrom + "` in our database",
+			})
+		}
+		return c.JSON(http.StatusOK, ResponseV3{
+			IP: ip.String(),
+			AS: &ASResponse{
+				Number:       as.AutonomousSystemNumber,
+				Organization: as.AutonomousSystemOrganization,
+			},
+			Location: &LocationResponse{
+				City: record.City.Names["en"],
+				Country: CodeResponse{
+					Code: record.Country.IsoCode,
+					Name: record.Country.Names["en"],
+				},
+				Latitude:  record.Location.Latitude,
+				Longitude: record.Location.Longitude,
+				Timezone:  record.Location.TimeZone,
+			},
+			Astral: getAstralString(date, record.Location.Latitude, record.Location.Longitude, record.Location.TimeZone),
 		})
 	})
 

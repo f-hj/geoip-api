@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/sj14/astral"
+	"github.com/sj14/astral/pkg/astral"
 )
 
 type AstralResponse struct {
