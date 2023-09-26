@@ -117,7 +117,19 @@ func main() {
 			log.Println(err)
 		}
 
-		return c.String(http.StatusOK, ip.String()+" from "+record.City.Names["en"]+", "+record.Country.Names["en"]+", using "+as.AutonomousSystemOrganization)
+		str := ip.String() + " "
+		if record.City.Names["en"] != "" && record.Country.Names["en"] != "" {
+			str += "from "
+			if record.City.Names["en"] != "" {
+				str += record.City.Names["en"] + ", "
+			}
+			if record.Country.Names["en"] != "" {
+				str += record.Country.Names["en"] + ", "
+			}
+		}
+		str += "using " + as.AutonomousSystemOrganization
+
+		return c.String(http.StatusOK, str)
 	})
 
 	e.GET("/v1", func(c echo.Context) error {
