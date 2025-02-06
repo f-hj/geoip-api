@@ -110,7 +110,7 @@ func main() {
 	e.GET("/plain", func(c echo.Context) error {
 		ipFrom := getIp(c)
 		if ipFrom == "" {
-			return c.JSON(http.StatusBadRequest, "Cannot get an IP (?ip, X-Forwarded-For, X-Real-IP or Remote address)")
+			return c.String(http.StatusBadRequest, "Cannot get an IP (?ip, X-Forwarded-For, X-Real-IP or Remote address)")
 		}
 
 		ip := net.ParseIP(ipFrom)
