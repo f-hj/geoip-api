@@ -1,0 +1,55 @@
+<html>
+  <head>
+    <title>Geo IP</title>
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Geo IP</h1>
+    <ul>
+      <li><b>IP</b> {{ .IP }}</li>
+      <li>
+        <b>AS</b>
+        <ul>
+          <li><b>Number</b> {{ .AS.AutonomousSystemNumber }}</li>
+          <li><b>Name</b> {{ .AS.AutonomousSystemOrganization }}</li>
+        </ul>
+      </li>
+      <li>
+        <b>Location</b>
+        <ul>
+          <li>
+            <b>City</b>
+            <ul>
+              {{ range $key, $value := .Location.City.Names }}
+              <li>{{ $key }}: {{ $value }}</li>
+              {{ end }}
+            </ul>
+          </li>
+          <li>
+            <b>Country</b>
+            <ul>
+              {{ range $key, $value := .Location.Country.Names }}
+              <li>{{ $key }}: {{ $value }}</li>
+              {{ end }}
+            </ul>
+          </li>
+          <li>
+            <b>Point</b>
+            <ul>
+              <li><b>Latitude</b> {{ .Location.Location.Latitude }}</li>
+              <li><b>Longitude</b> {{ .Location.Location.Longitude }}</li>
+              <li><b>Accuracy</b> {{ .Location.Location.AccuracyRadius }}km</li>
+            </ul>
+          </li>
+          <li>
+            <b>Timezone</b> {{ .Location.Location.TimeZone }}
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </body>
+</html>

@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/golang/gddo/httputil"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/oschwald/geoip2-golang"
@@ -102,12 +103,32 @@ func main() {
 	e := echo.New()
 	e.HideBanner = true
 
+	// Load templates
+	tmpl, err := NewHTMLTemplates()
+	if err != nil {
+		log.Fatal(err)
+	}
+	e.Renderer = tmpl
+
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowMethods: []string{http.MethodGet},
 	}))
 
 	e.GET("/healthz", func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
+	})
+
+	e.GET("/", func(ctx echo.Context) error {
+		ct := httputil.NegotiateContentType(ctx.Request(), []string{"text/plain", "text/html", "application/json"}, "text/plain")
+		switch ct {
+		case "text/html":
+			return ctx.Redirect(http.StatusTemporaryRedirect, "/html?"+ctx.QueryParams().Encode())
+		case "text/plain":
+			return ctx.Redirect(http.StatusTemporaryRedirect, "/plain?"+ctx.QueryParams().Encode())
+		case "application/json":
+			return ctx.Redirect(http.StatusTemporaryRedirect, "/v3?"+ctx.QueryParams().Encode())
+		}
+		return ctx.String(http.StatusInternalServerError, "Cannot negotiate content-type from Accept header")
 	})
 
 	e.GET("/plain", func(c echo.Context) error {
@@ -141,6 +162,37 @@ func main() {
 		str += "using " + as.AutonomousSystemOrganization
 
 		return c.String(http.StatusOK, str)
+	})
+
+	e.GET("/html", func(ctx echo.Context) error {
+		ipFrom := getIp(ctx)
+		if ipFrom == "" {
+			return ctx.Render(http.StatusBadRequest, "error.html", &map[string]string{
+				"Error": "Cannot get an IP (?ip, X-Forwarded-For, X-Real-IP or Remote address)",
+			})
+		}
+
+		ip := net.ParseIP(ipFrom)
+
+		location, err := dbCity.City(ip)
+		if err != nil || location == nil {
+			return ctx.Render(http.StatusNotFound, "error.html", &map[string]string{
+				"Error": "Cannot find IP `" + ipFrom + "` in our database",
+			})
+		}
+
+		as, err := dbASN.ASN(ip)
+		if err != nil {
+			return ctx.Render(http.StatusNotFound, "error.html", &map[string]string{
+				"Error": "Cannot find ASN for IP `" + ipFrom + "` in our database",
+			})
+		}
+
+		return ctx.Render(http.StatusOK, "main.html", &map[string]any{
+			"IP":       ip.String(),
+			"AS":       as,
+			"Location": location,
+		})
 	})
 
 	e.GET("/v1", func(c echo.Context) error {

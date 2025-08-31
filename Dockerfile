@@ -1,5 +1,5 @@
 # Compile Golang
-FROM golang as builder
+FROM golang:1.25 AS builder
 
 COPY . /data
 WORKDIR /data
