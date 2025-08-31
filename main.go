@@ -117,7 +117,7 @@ func main() {
 
 		record, err := dbCity.City(ip)
 		if err != nil || record == nil {
-			return c.String(http.StatusNotFound, "Cannot found IP `"+ipFrom+"` in our database")
+			return c.String(http.StatusNotFound, "Cannot find IP `"+ipFrom+"` in our database")
 		}
 
 		as, err := dbASN.ASN(ip)
@@ -155,7 +155,7 @@ func main() {
 		if err != nil || record == nil {
 			return c.JSON(http.StatusNotFound, Error{
 				Message: "Not found",
-				Info:    "Cannot found IP `" + ipFrom + "` in our database",
+				Info:    "Cannot find IP `" + ipFrom + "` in our database",
 			})
 		}
 		return c.JSON(http.StatusOK, ResponseV1{
@@ -188,7 +188,7 @@ func main() {
 		if err != nil || record == nil {
 			return c.JSON(http.StatusNotFound, Error{
 				Message: "Not found",
-				Info:    "Cannot found IP `" + ipFrom + "` in our database",
+				Info:    "Cannot find IP `" + ipFrom + "` in our database",
 			})
 		}
 		return c.JSON(http.StatusOK, ResponseV2{
@@ -236,7 +236,7 @@ func main() {
 		if err != nil || record == nil {
 			return c.JSON(http.StatusNotFound, Error{
 				Message: "Not found",
-				Info:    "Cannot found IP `" + ipFrom + "` in our database",
+				Info:    "Cannot find IP `" + ipFrom + "` in our database",
 			})
 		}
 		return c.JSON(http.StatusOK, ResponseV3{
