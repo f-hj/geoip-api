@@ -13,6 +13,7 @@ RUN wget "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-AS
 
 # Get alpine
 FROM alpine:3.13.0
+RUN apk add --no-cache tzdata
 
 COPY --from=builder /data/geoip-api /bin/geoip-api
 
