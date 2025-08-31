@@ -68,7 +68,10 @@ func getIp(c echo.Context) string {
 		ipFrom = c.Request().Header.Get("X-Real-IP")
 	}
 	if ipFrom == "" {
-		ipFrom = c.Request().RemoteAddr
+		host, _, err := net.SplitHostPort(c.Request().RemoteAddr)
+		if err == nil {
+			ipFrom = host
+		}
 	}
 	return ipFrom
 }
