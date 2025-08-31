@@ -107,7 +107,7 @@ func main() {
 	}))
 
 	e.GET("/healthz", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, "OK")
+		return c.String(http.StatusOK, "OK")
 	})
 
 	e.GET("/plain", func(c echo.Context) error {
